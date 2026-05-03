@@ -1,0 +1,25 @@
+<app-header />
+
+<main class="main-content">
+  <div class="container">
+    <!-- Upload Section -->
+    @if (!activeJobId()) {
+      <app-upload (jobStarted)="onJobStarted($event)" />
+    } @else {
+      <!-- Back Button -->
+      <div class="back-bar">
+        <button class="btn-back" (click)="resetApp()" id="btn-new-video">
+          <span class="material-icons-round">arrow_back</span>
+          Process Another Video
+        </button>
+      </div>
+
+      <!-- Clips Section -->
+      <app-clips [jobId]="activeJobId()!" />
+    }
+  </div>
+</main>
+
+<footer class="app-footer">
+  <p>Built with <span class="gradient-text">FFmpeg</span> &middot; SmartShorts Studio</p>
+</footer>

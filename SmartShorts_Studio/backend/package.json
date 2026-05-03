@@ -1,0 +1,27 @@
+{
+  "name": "video-splitter-backend",
+  "version": "1.0.0",
+  "description": "Backend API for SmartShorts Studio AI video editor",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "start:queue": "set QUEUE_ENABLED=true&& node server.js",
+    "dev:queue": "set QUEUE_ENABLED=true&& nodemon server.js"
+  },
+  "dependencies": {
+    "bullmq": "^5.76.4",
+    "compromise": "^14.15.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "ioredis": "^5.10.1",
+    "multer": "^1.4.5-lts.1",
+    "natural": "^8.1.1",
+    "sentiment": "^5.0.2",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

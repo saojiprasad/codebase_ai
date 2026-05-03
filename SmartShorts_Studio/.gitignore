@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment
+backend/.env
+
+# Uploaded & processed files
+backend/uploads/
+backend/outputs/
+
+# FFmpeg binaries (users should install locally)
+ffmpeg/
+
+# Angular build output
+frontend/dist/
+frontend/.angular/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

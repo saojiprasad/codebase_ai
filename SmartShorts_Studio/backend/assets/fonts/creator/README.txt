@@ -1,0 +1,1 @@
+SmartShorts uses system fonts when no downloaded open font is available.

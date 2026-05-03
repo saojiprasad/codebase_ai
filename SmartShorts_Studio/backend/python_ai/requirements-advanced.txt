@@ -1,0 +1,25 @@
+# Optional advanced AI stack for the other laptop.
+# Install only if your machine has enough RAM/VRAM.
+
+-r requirements.txt
+
+# Faster local transcription. For NVIDIA GPU, install matching torch first.
+faster-whisper>=1.1.0
+ctranslate2>=4.5.0
+
+# Word-level alignment and diarization helpers.
+# pyannote may require a Hugging Face token for gated models.
+whisperx>=3.2.0
+pyannote.audio>=3.3.0
+
+# Audio cleanup and professional loudness workflows.
+noisereduce>=3.0.0
+pyloudnorm>=0.1.1
+
+# Optional ML emotion/text classification.
+transformers>=4.44.0
+accelerate>=0.34.0
+
+# Better image/video analysis utilities.
+opencv-contrib-python>=4.9.0
+Pillow>=10.4.0

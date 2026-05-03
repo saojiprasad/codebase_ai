@@ -1,0 +1,263 @@
+<section class="upload-section" id="upload-section">
+  <!-- Drop Zone -->
+  <div
+    class="drop-zone glass"
+    [class.drag-over]="isDragOver()"
+    [class.has-file]="selectedFile()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    id="drop-zone"
+  >
+    @if (!selectedFile()) {
+      <div class="drop-content" (click)="fileInput.click()">
+        <div class="drop-icon">
+          <span class="material-icons-round">cloud_upload</span>
+        </div>
+        <h2>Drop your video here</h2>
+        <p>or <span class="browse-link">browse files</span></p>
+        <p class="file-hint">All video formats supported (MP4, MKV, AVI, MOV, WebM...)</p>
+      </div>
+    } @else {
+      <div class="file-preview">
+        <div class="file-icon">
+          <span class="material-icons-round">movie</span>
+        </div>
+        <div class="file-info">
+          <p class="file-name">{{ selectedFile()!.name }}</p>
+          <p class="file-size">{{ formatFileSize(selectedFile()!.size) }}</p>
+        </div>
+        @if (!isUploading() && !uploadComplete()) {
+          <button class="btn-remove" (click)="removeFile()" id="btn-remove-file">
+            <span class="material-icons-round">close</span>
+          </button>
+        }
+        @if (uploadComplete()) {
+          <div class="upload-success">
+            <span class="material-icons-round">check_circle</span>
+          </div>
+        }
+      </div>
+    }
+
+    <input
+      #fileInput
+      type="file"
+      accept="video/*,.mkv,.avi,.mov,.wmv,.flv,.webm,.mpeg,.mpg,.3gp,.m4v,.ts,.mts,.vob,.ogv"
+      (change)="onFileSelected($event)"
+      hidden
+      id="file-input"
+    />
+  </div>
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="error-message" id="error-message">
+      <span class="material-icons-round">error_outline</span>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <!-- Upload Progress -->
+  @if (isUploading()) {
+    <div class="progress-section" id="upload-progress">
+      <div class="progress-header">
+        <span class="progress-label">Uploading...</span>
+        <span class="progress-value">{{ uploadProgress() }}%</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" [style.width.%]="uploadProgress()"></div>
+      </div>
+    </div>
+  }
+
+  <!-- Options Panel (shown when file is selected, before upload) -->
+  @if (selectedFile() && !isUploading() && !uploadComplete()) {
+    <div class="options-panel glass" id="options-panel">
+      <h3>
+        <span class="material-icons-round">auto_awesome</span>
+        Viral Shorts Factory
+      </h3>
+
+      <div class="options-grid">
+        <!-- Clipping Mode -->
+        <div class="option-group">
+          <label class="option-label">Clipping Engine</label>
+          <div class="preset-grid 2-col">
+            @for (mode of clippingModes; track mode.value) {
+              <button
+                class="aspect-btn"
+                [class.active]="clippingMode() === mode.value"
+                (click)="setClippingMode(mode.value)"
+              >
+                <span class="material-icons-round">{{ mode.icon }}</span>
+                <div class="aspect-info">
+                  <span class="aspect-label">{{ mode.label }}</span>
+                  <span class="aspect-desc">{{ mode.desc }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Content Mode OR Duration (Dynamic) -->
+        <div class="option-group">
+          <label class="option-label">
+            {{ clippingMode() === 'smart' ? 'Content Type (AI Mode)' : clippingMode() === 'subtitle_only' ? 'Clip Duration (Subtitle Only)' : 'Clip Duration (Fixed Clips)' }}
+          </label>
+
+          @if (clippingMode() === 'smart') {
+            <div class="duration-presets content-modes">
+              @for (mode of contentModes; track mode.value) {
+                <button
+                  class="preset-btn with-icon"
+                  [class.active]="contentMode() === mode.value"
+                  (click)="setContentMode(mode.value)"
+                >
+                  <div class="btn-content" style="display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span class="material-icons-round">{{ mode.icon }}</span>
+                      <span style="font-weight: 600;">{{ mode.label }}</span>
+                    </div>
+                    <span style="font-size: 0.75rem; opacity: 0.8; text-align: center;">{{ mode.desc }}</span>
+                  </div>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="duration-presets">
+              @for (preset of clipDurations; track preset.value) {
+                <button
+                  class="preset-btn"
+                  [class.active]="clipDuration() === preset.value"
+                  (click)="setDuration(preset.value)"
+                >
+                  {{ preset.label }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Aspect Ratio -->
+        @if (clippingMode() !== 'fixed') {
+        <div class="option-group">
+          <label class="option-label">Output Format</label>
+          <div class="aspect-presets">
+            @for (preset of aspectPresets; track preset.value) {
+              <button
+                class="aspect-btn format-btn"
+                [class.active]="aspectRatio() === preset.value"
+                (click)="setAspectRatio(preset.value)"
+              >
+                <span class="material-icons-round">{{ preset.icon }}</span>
+                <div class="aspect-info">
+                  <span class="aspect-label">{{ preset.label }}</span>
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+        }
+
+        <!-- Enhancements -->
+        @if (clippingMode() !== 'fixed') {
+        <div class="option-group">
+          <h3>Enhancements</h3>
+          <div class="toggles-row" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+            <div class="locked-feature">
+              <span class="material-icons-round">subtitles</span>
+              <span>Viral Captions Always On</span>
+            </div>
+            @if (clippingMode() === 'smart') {
+              <label class="toggle-switch">
+                <input type="checkbox" [checked]="enableBroll()" (change)="toggleBroll()">
+                <span class="slider"></span>
+                <span class="toggle-label">Inject Local B-Roll</span>
+              </label>
+              <label class="toggle-switch">
+                <input type="checkbox" [checked]="enableSfx()" (change)="toggleSfx()">
+                <span class="slider"></span>
+                <span class="toggle-label">Auto SFX</span>
+              </label>
+              <label class="toggle-switch">
+                <input type="checkbox" [checked]="enableBgm()" (change)="toggleBgm()">
+                <span class="slider"></span>
+                <span class="toggle-label">Background Music</span>
+              </label>
+            }
+          </div>
+
+          @if (clippingMode() === 'smart') {
+            <label class="option-label">Effects Level</label>
+            <div class="duration-presets effects-levels">
+              @for (level of effectsLevels; track level.value) {
+                <button
+                  class="preset-btn style-btn"
+                  [class.active]="effectsLevel() === level.value"
+                  (click)="setEffectsLevel(level.value)"
+                >
+                  <span style="font-weight: 600;">{{ level.label }}</span>
+                  <span style="font-size: 0.75rem; opacity: 0.8; text-align: center;">{{ level.desc }}</span>
+                </button>
+              }
+            </div>
+          }
+
+          <!-- Subtitle Styles (Conditionally shown if Subtitles enabled) -->
+          @if (addSubtitles()) {
+            <div class="subtitle-styles mt-3">
+              <div class="duration-presets">
+                @for (style of subtitleStyles; track style.value) {
+                  <button
+                    class="preset-btn style-btn"
+                    [class.active]="subtitleStyle() === style.value"
+                    (click)="setSubtitleStyle(style.value)"
+                    style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px;"
+                  >
+                    <span style="font-weight: 600;">{{ style.label }}</span>
+                    <span style="font-size: 0.75rem; opacity: 0.8; text-align: center;">{{ style.desc }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        }
+
+        <!-- Crop Mode -->
+        @if (clippingMode() !== 'fixed') {
+        <div class="option-group">
+          <label class="option-label">Framing / Cropping</label>
+          <div class="duration-presets crop-modes">
+            @for (mode of cropModes; track mode.value) {
+              <button
+                class="preset-btn"
+                [class.active]="cropMode() === mode.value"
+                (click)="setCropMode(mode.value)"
+                [title]="mode.desc"
+              >
+                {{ mode.label }}
+              </button>
+            }
+          </div>
+        </div>
+        }
+
+      </div>
+
+      <button class="btn-process" (click)="startUpload()" id="btn-start-upload">
+        <span class="material-icons-round">auto_awesome</span>
+        Generate Viral Shorts
+      </button>
+    </div>
+  }
+
+  <!-- Processing started indicator -->
+  @if (isProcessing()) {
+    <div class="processing-indicator" id="processing-indicator">
+      <div class="spinner"></div>
+      <span>Starting AI shorts factory...</span>
+    </div>
+  }
+</section>

@@ -1,0 +1,12 @@
+services:
+  redis:
+    image: redis:7
+    container_name: smartshorts-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - smartshorts_redis:/data
+
+volumes:
+  smartshorts_redis:

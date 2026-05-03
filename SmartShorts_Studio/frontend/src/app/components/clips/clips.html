@@ -1,0 +1,195 @@
+<section class="clips-section" id="clips-section">
+  @if (status()) {
+    <div class="status-header">
+      <div class="status-info">
+        <span class="material-icons-round status-icon" [class]="status()?.status">
+          {{ getStatusIcon() }}
+        </span>
+        <div class="status-text">
+          <h2>{{ getStatusLabel() }}</h2>
+          <p class="pipeline-step">{{ getPipelineStepLabel() }}</p>
+        </div>
+      </div>
+
+      @if (status()?.status === 'processing') {
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="status()?.progress"></div>
+          </div>
+          <span>{{ status()?.progress }}%</span>
+        </div>
+      }
+
+      @if (status()?.status === 'completed' && status()?.clips?.length) {
+        <button class="btn-download-all" (click)="downloadAll()">
+          <span class="material-icons-round">download</span>
+          Download All
+        </button>
+      }
+    </div>
+
+    @if (status()?.analysis) {
+      <div class="analysis-strip">
+        <div>
+          <span class="analysis-label">Mode</span>
+          <strong>{{ status()?.analysis?.mode || 'auto viral' }}</strong>
+        </div>
+        <div>
+          <span class="analysis-label">Source Length</span>
+          <strong>{{ formatDuration(status()?.analysis?.totalDuration || 0) }}</strong>
+        </div>
+        <div>
+          <span class="analysis-label">Moments Found</span>
+          <strong>{{ status()?.analysis?.selectedMoments?.length || status()?.totalClips || 0 }}</strong>
+        </div>
+      </div>
+    }
+
+    @if (status()?.error) {
+      <div class="error-banner">
+        <span class="material-icons-round">error</span>
+        {{ status()?.error }}
+      </div>
+    }
+
+    @if (status()?.status === 'processing' && !status()?.clips?.length) {
+      <div class="empty-state">
+        <div class="processing-animation">
+          <div class="processing-ring"></div>
+          <span class="material-icons-round">content_cut</span>
+        </div>
+        <h3>Splitting your video...</h3>
+        <p>This may take a few minutes depending on video length</p>
+      </div>
+    } @else if (status()?.clips?.length) {
+      <div class="clips-grid">
+        @for (clip of status()!.clips; track clip.name) {
+          <div class="clip-card">
+            <div class="clip-preview">
+              <video [src]="getStreamUrl(clip)" controls preload="metadata"></video>
+              @if (clip.viralScore) {
+                <div class="viral-badge" [style.background-color]="getViralGradeColor(clip.viralScore)">
+                  <span class="material-icons-round">whatshot</span>
+                  {{ clip.viralScore }}
+                </div>
+              }
+            </div>
+
+            <div class="clip-info">
+              <div class="clip-title-row">
+                <h3>Part {{ clip.partNumber }}</h3>
+                @if (clip.grade) {
+                  <span class="grade-pill">Grade {{ clip.grade }}</span>
+                }
+              </div>
+
+              @if (clip.hookText) {
+                <p class="hook-text">"{{ clip.hookText }}"</p>
+              }
+
+              <div class="score-grid">
+                <div>
+                  <span>Hook</span>
+                  <strong>{{ getScore(clip, 'hookScore') }}</strong>
+                </div>
+                <div>
+                  <span>Retention</span>
+                  <strong>{{ getScore(clip, 'retentionScore') }}</strong>
+                </div>
+                <div>
+                  <span>Engage</span>
+                  <strong>{{ getScore(clip, 'engagementPrediction') }}</strong>
+                </div>
+                <div>
+                  <span>Replay</span>
+                  <strong>{{ getScore(clip, 'replayPotential') }}</strong>
+                </div>
+              </div>
+
+              @if (clip.editPlan) {
+                <div class="timeline-summary">
+                  <span class="material-icons-round">timeline</span>
+                  <span>{{ getTimelineSummary(clip) }}</span>
+                </div>
+              }
+
+              @if (clip.assetTimeline?.length) {
+                <div class="effect-timeline">
+                  @for (event of getTimelineEvents(clip); track $index) {
+                    <div class="effect-marker" [style.left.%]="(event.time / (+clip.duration || 1)) * 100" [title]="getEventLabel(event)">
+                      <span></span>
+                    </div>
+                  }
+                </div>
+                <div class="effect-list">
+                  @for (event of getTimelineEvents(clip); track $index) {
+                    <span>{{ event.time | number:'1.1-1' }}s · {{ getEventLabel(event) }}</span>
+                  }
+                </div>
+              }
+
+              @if (clip.tips?.length) {
+                <div class="tips-list">
+                  @for (tip of clip.tips; track tip) {
+                    <span>{{ tip }}</span>
+                  }
+                </div>
+              }
+
+              @if (clip.thumbnails?.shortsCover) {
+                <div class="thumbnail-row">
+                  <img [src]="getAssetUrl(clip.thumbnails?.shortsCover)" alt="Shorts cover">
+                  <img [src]="getAssetUrl(clip.thumbnails?.youtubeThumbnail)" alt="YouTube thumbnail">
+                  <img [src]="getAssetUrl(clip.thumbnails?.instagramCover)" alt="Instagram cover">
+                </div>
+              }
+
+              <!-- NEW Metadata Section -->
+              @if (clip.title) {
+                <div class="metadata-section">
+                  <div class="meta-field">
+                    <label>Title</label>
+                    <div class="meta-input-group">
+                      <input type="text" [value]="clip.title" readonly #titleInput>
+                      <button class="btn-icon" (click)="copyToClipboard(clip.title)" title="Copy Title">
+                        <span class="material-icons-round">content_copy</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="meta-field">
+                    <label>Description & Tags</label>
+                    <div class="meta-input-group">
+                      <textarea readonly rows="3" #descInput>{{ clip.description }}</textarea>
+                      <button class="btn-icon" (click)="copyToClipboard(clip.description)" title="Copy Description">
+                        <span class="material-icons-round">content_copy</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (getHashtags(clip)) {
+                    <div class="hashtag-line">{{ getHashtags(clip) }}</div>
+                  }
+                </div>
+              }
+
+              <div class="clip-meta">
+                <span>{{ clip.size }}</span>
+              </div>
+
+              <button class="btn-download" (click)="downloadClip(clip)">
+                <span class="material-icons-round">file_download</span>
+                Download Video
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (status()?.status === 'completed') {
+      <div class="no-clips">
+        <span class="material-icons-round">videocam_off</span>
+        <p>No clips were generated. Try adjusting your settings.</p>
+      </div>
+    }
+  }
+</section>

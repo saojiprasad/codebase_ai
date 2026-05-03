@@ -1,0 +1,11 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+pydantic>=2.7.0
+numpy>=1.26.0
+opencv-python>=4.9.0
+mediapipe>=0.10.14
+librosa>=0.10.2
+soundfile>=0.12.1
+scenedetect[opencv]>=0.6.4
+openai-whisper>=20240930
